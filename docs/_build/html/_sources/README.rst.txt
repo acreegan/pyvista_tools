@@ -5,6 +5,10 @@ PyVista Tools
 PyVista Tools is a python package that provides extended functionality to PyVista including
 new features and new tools for working with PyVista meshes.
 
+Documentation can be found at: https://acreegan.github.io/pyvista_tools/
+
+Source code can be found at: https://github.com/acreegan/pyvista_tools
+
 Features
 --------
 - Extract enclosed regions of a mesh
