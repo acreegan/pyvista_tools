@@ -1,0 +1,759 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyvista_tools.pyvista_tools &#8212; PyVista Tools  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyvista_tools.pyvista_tools</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">ArrayLike</span>
+<span class="kn">import</span> <span class="nn">pyvista</span> <span class="k">as</span> <span class="nn">pv</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <span class="nn">pymeshfix</span>
+<span class="kn">from</span> <span class="nn">pyvista_tools.geometry_tools</span> <span class="kn">import</span> <span class="n">find_sequence</span><span class="p">,</span> <span class="n">winding_order_agrees_with_normal</span><span class="p">,</span> <span class="n">compute_normal</span><span class="p">,</span>\
+     <span class="n">dihedral_angle</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">pyvista_tools is a module that provides tools for working with pyvista objects. This module should contain functions </span>
+<span class="sd">that are not necessarily useful on their own, but can be used to support development of pyvista features.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="pyvista_faces_to_2d"><a class="viewcode-back" href="../../modules.html#pyvista_tools.pyvista_tools.pyvista_faces_to_2d">[docs]</a><span class="k">def</span> <span class="nf">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">faces</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert pyvista faces from the native 1d array to a 2d array with one face per row. Padding is trimmed.</span>
+
+<span class="sd">    Only works on a list of faces with all the same number of points per face.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    faces</span>
+<span class="sd">        Faces to be reshaped</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    2d array of faces</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points_per_face</span> <span class="o">=</span> <span class="n">faces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">faces</span> <span class="o">=</span> <span class="n">faces</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">points_per_face</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">faces</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">faces</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;pyvista_faces_to_2d requires all to be the same shape&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">faces</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span></div>
+
+
+<div class="viewcode-block" id="pyvista_faces_to_1d"><a class="viewcode-back" href="../../modules.html#pyvista_tools.pyvista_tools.pyvista_faces_to_1d">[docs]</a><span class="k">def</span> <span class="nf">pyvista_faces_to_1d</span><span class="p">(</span><span class="n">faces</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert 2d array of faces to the pyvista native 1d format, inserting the padding.</span>
+
+<span class="sd">    Only works on a list of faces with all the same number of points per face.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    faces</span>
+<span class="sd">        Faces to be reshaped</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    1d array of faces</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">padding</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">faces</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">pyvista_faces_by_dimension</span><span class="p">(</span><span class="n">faces</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    You can also do this by casting to UnstructuredGrid, where the face types are available in a dict</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    faces</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">faces</span><span class="p">):</span>
+        <span class="c1"># Preceding each face is the &quot;padding&quot; indicating the number of elements in the face</span>
+        <span class="n">num_elems</span> <span class="o">=</span> <span class="n">faces</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="c1"># Append padding plus each element to the output dict</span>
+        <span class="k">if</span> <span class="n">num_elems</span> <span class="ow">in</span> <span class="n">output</span><span class="p">:</span>
+            <span class="n">output</span><span class="p">[</span><span class="n">num_elems</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="n">num_elems</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">faces</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_elems</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output</span><span class="p">[</span><span class="n">num_elems</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">faces</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_elems</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
+        <span class="c1"># Increment index to the next padding number</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="n">num_elems</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+
+<div class="viewcode-block" id="select_shared_faces"><a class="viewcode-back" href="../../modules.html#pyvista_tools.pyvista_tools.select_shared_faces">[docs]</a><span class="k">def</span> <span class="nf">select_shared_faces</span><span class="p">(</span><span class="n">mesh_a</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">mesh_b</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Select that faces that two meshes share. Shared faces are determined by selecting the faces that use shared points.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh_a</span>
+<span class="sd">        First mesh</span>
+<span class="sd">    mesh_b</span>
+<span class="sd">        Second mesh</span>
+<span class="sd">    tolerance</span>
+<span class="sd">        Tolerance for selecting shared points</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple of lists containing the indices of the shared faces in mesh_a and mesh_b</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shared_points_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mesh_a&quot;</span><span class="p">:</span> <span class="n">mesh_a</span><span class="p">,</span> <span class="s2">&quot;mesh_b&quot;</span><span class="p">:</span> <span class="n">mesh_b</span><span class="p">,</span> <span class="s2">&quot;tolerance&quot;</span><span class="p">:</span> <span class="n">tolerance</span><span class="p">}</span>
+    <span class="n">shared_points</span> <span class="o">=</span> <span class="n">select_shared_points</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">shared_points_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">})</span>
+
+    <span class="n">mesh_a_faces</span> <span class="o">=</span> <span class="n">select_faces_using_points</span><span class="p">(</span><span class="n">mesh_a</span><span class="p">,</span> <span class="n">shared_points</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">mesh_b_faces</span> <span class="o">=</span> <span class="n">select_faces_using_points</span><span class="p">(</span><span class="n">mesh_b</span><span class="p">,</span> <span class="n">shared_points</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">mesh_a_faces</span><span class="p">,</span> <span class="n">mesh_b_faces</span></div>
+
+
+<span class="k">def</span> <span class="nf">select_shared_points</span><span class="p">(</span><span class="n">mesh_a</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">mesh_b</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-05</span><span class="p">,</span> <span class="n">progress_bar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> \
+        <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Select the points that two meshes share. Points are considered shared if they are within a specified euclidian</span>
+<span class="sd">    distance from one another.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh_a</span>
+<span class="sd">        First mesh</span>
+<span class="sd">    mesh_b</span>
+<span class="sd">        Second mesh</span>
+<span class="sd">    tolerance</span>
+<span class="sd">        Maximum euclidian distance between points to consider them shared</span>
+<span class="sd">    progress_bar</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    shared_points</span>
+<span class="sd">        Tuple containing indices of shared points in mesh_a, and shared points in mesh_b</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shared_points_a</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">shared_points_b</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i_a</span><span class="p">,</span> <span class="n">point_a</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">mesh_a</span><span class="o">.</span><span class="n">points</span><span class="p">)),</span> <span class="n">disable</span><span class="o">=</span><span class="ow">not</span> <span class="n">progress_bar</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Selecting Shared Points&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i_b</span><span class="p">,</span> <span class="n">point_b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mesh_b</span><span class="o">.</span><span class="n">points</span><span class="p">):</span>
+            <span class="c1"># linalg.norm calculates euclidean distance</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">point_a</span> <span class="o">-</span> <span class="n">point_b</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tolerance</span><span class="p">:</span>
+                <span class="c1"># Need to remember the index of the shared point in both meshes so we can find faces that use it in both</span>
+                <span class="n">shared_points_a</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i_a</span><span class="p">)</span>
+                <span class="n">shared_points_b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i_b</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">shared_points_a</span><span class="p">,</span> <span class="n">shared_points_b</span>
+
+
+<span class="k">def</span> <span class="nf">select_faces_using_points</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Select all faces in a mesh that contain only the specified points.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh:</span>
+<span class="sd">        Mesh to select from</span>
+<span class="sd">    points</span>
+<span class="sd">        The only points in the given mesh that the selected faces may contain</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mesh_faces</span>
+<span class="sd">        List of indices of the selected faces in the mesh</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mesh_faces</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">faces</span> <span class="o">=</span> <span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">faces</span><span class="p">)</span>
+    <span class="n">points_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">face</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">faces</span><span class="p">):</span>
+        <span class="c1"># Check if all of the points in each face are in the target points set</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">face</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">points_set</span><span class="p">):</span>
+            <span class="n">mesh_faces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mesh_faces</span>
+
+
+<span class="k">def</span> <span class="nf">select_points_used_by_faces</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">faces</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                                <span class="n">exclusive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Select points used in the faces of a mesh. Optionally specify a subset of points and/or faces to check. When</span>
+<span class="sd">    exclusive is set to True, selects only points that are not used in the remaining faces.</span>
+
+<span class="sd">    Only works on meshes with all the same number of points per face.</span>
+
+<span class="sd">    Todo: not crash if you don&#39;t specify points (till then you can use list(range(len(mesh.points)))</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh</span>
+<span class="sd">        Mesh to select from</span>
+<span class="sd">    points</span>
+<span class="sd">        Optional subset of points in mesh to select from</span>
+<span class="sd">    faces</span>
+<span class="sd">        Optional subset of faces in mesh to test</span>
+<span class="sd">    exclusive</span>
+<span class="sd">        If true, selects only points exclusively used in the specified faces</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    List of points used in the specified faces</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mesh_faces_2d</span> <span class="o">=</span> <span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">faces</span><span class="p">)</span>
+    <span class="n">faces_2d</span> <span class="o">=</span> <span class="n">mesh_faces_2d</span><span class="p">[</span><span class="n">faces</span><span class="p">]</span>
+    <span class="n">remaining_faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">mesh_faces_2d</span><span class="p">,</span> <span class="n">faces</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Check if any given point exists in the faces to search</span>
+    <span class="n">used_in_faces</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">point</span> <span class="ow">in</span> <span class="n">face</span> <span class="k">for</span> <span class="n">face</span> <span class="ow">in</span> <span class="n">faces_2d</span><span class="p">):</span>
+            <span class="n">used_in_faces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
+
+    <span class="c1"># If exclusive is set, remove points that also exist in the remaining faces</span>
+    <span class="n">excluded_points</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">exclusive</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">used_in_faces</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">point</span> <span class="ow">in</span> <span class="n">face</span> <span class="k">for</span> <span class="n">face</span> <span class="ow">in</span> <span class="n">remaining_faces</span><span class="p">):</span>
+                <span class="n">excluded_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
+
+    <span class="n">used_in_faces</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">used_in_faces</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">excluded_points</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">used_in_faces</span>
+
+
+<div class="viewcode-block" id="select_faces_using_edges"><a class="viewcode-back" href="../../modules.html#pyvista_tools.pyvista_tools.select_faces_using_edges">[docs]</a><span class="k">def</span> <span class="nf">select_faces_using_edges</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">edges</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract all the faces of a Pyvista Polydata object that use a given set of edges</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh</span>
+<span class="sd">        Mesh to extract edges from</span>
+<span class="sd">    edges</span>
+<span class="sd">        Edges to use</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    faces_using_edges</span>
+<span class="sd">        List of faces in mesh that use edges</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+
+    <span class="n">faces_using_edges</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">face</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">faces</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">lines</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">find_sequence</span><span class="p">(</span><span class="n">face</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">faces_using_edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">faces_using_edges</span></div>
+
+
+<span class="k">def</span> <span class="nf">compute_face_agreement_with_normals</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate whether the normal vectors implied by the winding order of a mesh&#39;s faces agree with the mesh&#39;s normal</span>
+<span class="sd">    vector attributes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    agreements:</span>
+<span class="sd">        List of bool representing whether the normal vector implied by the winding order of each face is in the same</span>
+<span class="sd">        direction as the face&#39;s normal vector attribute</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">faces</span> <span class="o">=</span> <span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">faces</span><span class="p">)</span>
+    <span class="n">face_coords</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">faces</span><span class="p">]</span>
+
+    <span class="n">agreements</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">coords</span><span class="p">,</span> <span class="n">normal</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">face_coords</span><span class="p">,</span> <span class="n">mesh</span><span class="o">.</span><span class="n">face_normals</span><span class="p">):</span>
+        <span class="n">agreement</span> <span class="o">=</span> <span class="n">winding_order_agrees_with_normal</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span>
+        <span class="n">agreements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agreement</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">agreements</span>
+
+
+<span class="k">def</span> <span class="nf">rewind_face</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">face_num</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reverse the winding direction of a single face of a pyvista polydata</span>
+
+<span class="sd">    Note: this operates inplace</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh</span>
+<span class="sd">    face_num</span>
+<span class="sd">    inplace</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">faces</span> <span class="o">=</span> <span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">faces</span><span class="p">)</span>
+    <span class="n">face</span> <span class="o">=</span> <span class="n">faces</span><span class="p">[</span><span class="n">face_num</span><span class="p">]</span>
+    <span class="n">face</span> <span class="o">=</span> <span class="p">[</span><span class="n">face</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="n">face</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>  <span class="c1"># Start at same point, then reverse the rest of the face nodes</span>
+    <span class="n">faces</span><span class="p">[</span><span class="n">face_num</span><span class="p">]</span> <span class="o">=</span> <span class="n">face</span>
+    <span class="n">mesh</span><span class="o">.</span><span class="n">faces</span> <span class="o">=</span> <span class="n">pyvista_faces_to_1d</span><span class="p">(</span><span class="n">faces</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">rewind_neighbor</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">face</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">neighbor</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">shared_line</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">wind_opposite</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rewind a face&#39;s neighbor such that the neighbor has opposite handedness.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh</span>
+<span class="sd">    face</span>
+<span class="sd">    neighbor</span>
+<span class="sd">    shared_line</span>
+<span class="sd">    wind_opposite</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">find_sequence</span><span class="p">(</span><span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">faces</span><span class="p">)[</span><span class="n">face</span><span class="p">],</span> <span class="n">shared_line</span><span class="p">,</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">oriented_line</span> <span class="o">=</span> <span class="n">shared_line</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">oriented_line</span> <span class="o">=</span> <span class="n">shared_line</span>
+
+    <span class="k">if</span> <span class="n">find_sequence</span><span class="p">(</span><span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">faces</span><span class="p">)[</span><span class="n">neighbor</span><span class="p">],</span> <span class="n">oriented_line</span><span class="p">,</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">wind_opposite</span><span class="p">:</span>
+            <span class="n">rewind_face</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">neighbor</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">wind_opposite</span><span class="p">:</span>
+            <span class="n">rewind_face</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">neighbor</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">triangulate_loop_with_stitch</span><span class="p">(</span><span class="n">loop</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">points</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Triangulate a loop by stitching back and forth across it.</span>
+<span class="sd">    *Note* This algorithm can create self intersecting geometry in loops with concave sections</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    loop</span>
+<span class="sd">        List of lines making up the loop to be triangulated. Lines are represented by list of two ints referring to</span>
+<span class="sd">        indices in a points array</span>
+<span class="sd">    points</span>
+<span class="sd">        Array of points representing the 3D coordinates referred to by the elements of the loop.</span>
+<span class="sd">        Unused for this algorithm</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    faces</span>
+<span class="sd">        List of faces, each represented as a list of three indices to the points array</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">loop</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">loop</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Just need to look at the line starts</span>
+    <span class="n">faces</span> <span class="o">=</span> <span class="p">[[</span><span class="n">loop</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">loop</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">loop</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+    <span class="n">next_up_node</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># Already used 2 nodes from start of loop, 1 from end</span>
+    <span class="n">next_down_node</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="c1"># Next face always starts with the new node</span>
+        <span class="c1"># If i is even, count up from 0, if i is odd, count down from -1</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">new_node</span> <span class="o">=</span> <span class="n">loop</span><span class="p">[</span><span class="n">next_up_node</span><span class="p">]</span>
+            <span class="n">next_up_node</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">faces</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">new_node</span><span class="p">,</span> <span class="n">faces</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">faces</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]])</span>  <span class="c1"># on even iterations, go to opposite node first</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_node</span> <span class="o">=</span> <span class="n">loop</span><span class="p">[</span><span class="n">next_down_node</span><span class="p">]</span>
+            <span class="n">next_down_node</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">faces</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">new_node</span><span class="p">,</span> <span class="n">faces</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">faces</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]])</span>  <span class="c1"># on odd iterations, go to adjacent node first</span>
+
+    <span class="k">return</span> <span class="n">faces</span>
+
+
+<span class="k">def</span> <span class="nf">triangulate_loop_with_nearest_neighbors</span><span class="p">(</span><span class="n">loop</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">points</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Triangulate loop by building triangles using the nearest neighbor point to existing triangle edges.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    loop</span>
+<span class="sd">        List of lines making up the loop to be triangulated. Lines are represented by list of two ints referring to</span>
+<span class="sd">        indices in a points array</span>
+<span class="sd">    points</span>
+<span class="sd">        Array of points representing the 3D coordinates referred to by the elements of the loop.</span>
+<span class="sd">        Unused for this algorithm</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    faces</span>
+<span class="sd">        List of faces, each represented as a list of three indices to the points array</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">loop</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">loop</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Just need to look at where each line starts</span>
+    <span class="n">faces</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Start with a single face consisting of point 0 and its nearest neighbors</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">loop</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">neighbors</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">neighbor</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]))</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">neighbors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">neighbors</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">faces</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">])</span>
+
+    <span class="c1"># Recursively build faces off the first face</span>
+    <span class="n">continue_triangulating_with_nearest_neighbors</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">points</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">faces</span>
+
+
+<span class="k">def</span> <span class="nf">continue_triangulating_with_nearest_neighbors</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
+    <span class="n">a0</span><span class="p">,</span> <span class="n">b0</span><span class="p">,</span> <span class="n">c0</span> <span class="o">=</span> <span class="n">faces</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># Check all lines in latest triangle to recursively build off</span>
+    <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">c0</span><span class="p">,</span> <span class="n">b0</span><span class="p">),</span> <span class="p">(</span><span class="n">b0</span><span class="p">,</span> <span class="n">a0</span><span class="p">),</span> <span class="p">(</span><span class="n">a0</span><span class="p">,</span> <span class="n">c0</span><span class="p">)]:</span>
+        <span class="c1"># If the points are adjacent in the loop, they are on the edge and don&#39;t need to be built off</span>
+        <span class="n">points_adjacent</span> <span class="o">=</span> <span class="n">find_sequence</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+
+        <span class="c1"># If the line a,b is already found in two triangles, don&#39;t build any more</span>
+        <span class="n">line_in_two_faces</span> <span class="o">=</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">([</span><span class="n">find_sequence</span><span class="p">(</span><span class="n">face</span><span class="p">,</span> <span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">face</span> <span class="ow">in</span> <span class="n">faces</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">points_adjacent</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">line_in_two_faces</span><span class="p">:</span>
+
+            <span class="c1"># Look for neighbors that are not a or b and don&#39;t already have a triangle with a or b</span>
+            <span class="c1"># But at least one line in the triangle must be in the loop</span>
+            <span class="n">valid_neighbors</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">loop</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">point</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">]:</span>
+                    <span class="n">line_a_to_point_used</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">find_sequence</span><span class="p">(</span><span class="n">face</span><span class="p">,</span> <span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">point</span><span class="p">],</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">face</span> <span class="ow">in</span> <span class="n">faces</span><span class="p">])</span>
+                    <span class="n">line_b_to_point_used</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">find_sequence</span><span class="p">(</span><span class="n">face</span><span class="p">,</span> <span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">point</span><span class="p">],</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">face</span> <span class="ow">in</span> <span class="n">faces</span><span class="p">])</span>
+
+                    <span class="n">line_in_loop_a</span> <span class="o">=</span> <span class="n">find_sequence</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">point</span><span class="p">],</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+                    <span class="n">line_in_loop_b</span> <span class="o">=</span> <span class="n">find_sequence</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">point</span><span class="p">],</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">line_a_to_point_used</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">line_b_to_point_used</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">line_in_loop_a</span> <span class="ow">or</span> <span class="n">line_in_loop_b</span><span class="p">:</span>
+                            <span class="n">valid_neighbors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_neighbors</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">neighbors</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">valid_neighbors</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">neighbor</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]))</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">neighbors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">faces</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">])</span>
+            <span class="n">continue_triangulating_with_nearest_neighbors</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">points</span><span class="p">)</span>
+
+
+<span class="n">loop_triangulation_algorithms</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;stitch&quot;</span><span class="p">:</span> <span class="n">triangulate_loop_with_stitch</span><span class="p">,</span>
+    <span class="s2">&quot;nearest_neighbor&quot;</span><span class="p">:</span> <span class="n">triangulate_loop_with_nearest_neighbors</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="select_intersecting_triangles"><a class="viewcode-back" href="../../modules.html#pyvista_tools.pyvista_tools.select_intersecting_triangles">[docs]</a><span class="k">def</span> <span class="nf">select_intersecting_triangles</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper around the pymeshfix function for selecting self intersecting triangles</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh</span>
+<span class="sd">        Mesh to select from</span>
+<span class="sd">    quiet</span>
+<span class="sd">        Enable or disable verbose output from pymehsfix</span>
+<span class="sd">        *NOTE* pymeshfix seems to have this backward. Quiet=True makes it loud. Quiet=False makes it quiet</span>
+<span class="sd">    args</span>
+<span class="sd">        args for PyTMesh.select_intersecting_triangles</span>
+<span class="sd">    kwargs</span>
+<span class="sd">        kwargs for PyTMesh.select_intersecting_Triangles</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    intersecting</span>
+<span class="sd">        NDArray of intersecting triangles</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tin</span> <span class="o">=</span> <span class="n">pymeshfix</span><span class="o">.</span><span class="n">PyTMesh</span><span class="p">(</span><span class="n">quiet</span><span class="p">)</span>
+    <span class="n">tin</span><span class="o">.</span><span class="n">load_array</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">points</span><span class="p">,</span> <span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">faces</span><span class="p">))</span>
+    <span class="n">intersecting</span> <span class="o">=</span> <span class="n">tin</span><span class="o">.</span><span class="n">select_intersecting_triangles</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">intersecting</span></div>
+
+
+<div class="viewcode-block" id="identify_neighbors"><a class="viewcode-back" href="../../modules.html#pyvista_tools.pyvista_tools.identify_neighbors">[docs]</a><span class="k">def</span> <span class="nf">identify_neighbors</span><span class="p">(</span><span class="n">surface</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Identify neighbors of each face in a surface. Returns a dict of faces with each face&#39;s neighbors, grouped by the</span>
+<span class="sd">    lines that the faces share. Also returns a dict of lines in the surface with each face that uses each line.</span>
+
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    surface</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    neighbors_dict, lines_dict</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Create a dict of unique lines in the mesh, recording which faces use which lines</span>
+    <span class="n">lines_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">face_index</span><span class="p">,</span> <span class="n">face</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">surface</span><span class="o">.</span><span class="n">faces</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="n">pairwise</span><span class="p">([</span><span class="o">*</span><span class="n">face</span><span class="p">,</span> <span class="n">face</span><span class="p">[</span><span class="mi">0</span><span class="p">]]):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="n">lines_dict</span> <span class="k">else</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">lines_dict</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
+                <span class="n">lines_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">face_index</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lines_dict</span><span class="p">[(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)]</span> <span class="o">=</span> <span class="p">[</span><span class="n">face_index</span><span class="p">]</span>
+
+    <span class="c1"># Create a dict of faces, recording the neighbors of each face on each shared line</span>
+    <span class="n">neighbors_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">face_list</span> <span class="ow">in</span> <span class="n">lines_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">face_index</span> <span class="ow">in</span> <span class="n">face_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">face_index</span> <span class="ow">in</span> <span class="n">neighbors_dict</span><span class="p">:</span>
+                <span class="n">neighbors_dict</span><span class="p">[</span><span class="n">face_index</span><span class="p">][</span><span class="n">line</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">face_list</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">face_index</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">neighbors_dict</span><span class="p">[</span><span class="n">face_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">line</span><span class="p">:</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">face_list</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">face_index</span><span class="p">]}</span>
+
+    <span class="k">return</span> <span class="n">neighbors_dict</span><span class="p">,</span> <span class="n">lines_dict</span></div>
+
+
+<span class="k">def</span> <span class="nf">pairwise</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Temporary implementation of itertools.pairwise for compatibility with older versions of python</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># pairwise(&#39;ABCDEFG&#39;) --&gt; AB BC CD DE EF FG</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">tee</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+    <span class="nb">next</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">compute_neighbor_angles</span><span class="p">(</span><span class="n">surface</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">known_face</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">shared_line</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+                            <span class="n">use_winding_order_normal</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> \
+        <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the dihedral angles between one face of a surface mesh and its neighbors along a given shared line. The</span>
+<span class="sd">    angles are given as 0 &lt; angle &lt; 2*pi, where the positive direction is equivalent to rotation of the known_face</span>
+<span class="sd">    in the direction of its normal vector about the shared line.</span>
+
+<span class="sd">    Only works on surfaces with all faces having the same number of points. (Since pyvista_faces_to_2d is used)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    surface</span>
+<span class="sd">        Pyvista PolyData representing a surface mesh</span>
+<span class="sd">    known_face</span>
+<span class="sd">        Index of the face in surface that is known to be on the &quot;true&quot; surface</span>
+<span class="sd">    neighbors</span>
+<span class="sd">        List of indices to faces that are neighbors to known_face along a single shared line</span>
+<span class="sd">    shared_line</span>
+<span class="sd">        Tuple of indices to points in surface that represents the shared line between known_face and its neighbors</span>
+<span class="sd">    use_winding_order_normal</span>
+<span class="sd">        use the winding order of the known face to calculate the known face normal instead of the built in normal</span>
+<span class="sd">        attribute</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    neighbors_angles</span>
+<span class="sd">        List of dihedral angles between known_face and neighbors</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">surface_c</span> <span class="o">=</span> <span class="n">surface</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">face_points</span> <span class="o">=</span> <span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">surface_c</span><span class="o">.</span><span class="n">faces</span><span class="p">)[</span><span class="n">known_face</span><span class="p">]</span>
+    <span class="n">neighbors_points</span> <span class="o">=</span> <span class="n">pyvista_faces_to_2d</span><span class="p">(</span><span class="n">surface_c</span><span class="o">.</span><span class="n">faces</span><span class="p">)[</span><span class="n">neighbors</span><span class="p">]</span>
+
+    <span class="c1"># Get the shared line in the order it is in the known face</span>
+    <span class="k">if</span> <span class="n">find_sequence</span><span class="p">(</span><span class="n">face_points</span><span class="p">,</span> <span class="n">shared_line</span><span class="p">,</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">shared_line</span> <span class="o">=</span> <span class="n">shared_line</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># Get the shared line vector, also known as the normal to the plane on which the face normals lie</span>
+    <span class="n">shared_line_points</span> <span class="o">=</span> <span class="p">[</span><span class="n">surface_c</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">shared_line</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">surface_c</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">shared_line</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+    <span class="n">plane_normal</span> <span class="o">=</span> <span class="n">shared_line_points</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">shared_line_points</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Wind the neighbor faces with the opposite handedness to known face (shared line in the same direction) which will</span>
+    <span class="c1"># make their calculated normals point away</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">neighbor_face_points</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">neighbors_points</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">find_sequence</span><span class="p">(</span><span class="n">neighbor_face_points</span><span class="p">,</span> <span class="n">shared_line</span><span class="p">,</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">neighbors_points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">neighbor_face_points</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">neighbors_normals</span> <span class="o">=</span> <span class="p">[</span><span class="n">compute_normal</span><span class="p">(</span><span class="n">points_coords</span><span class="p">)</span> <span class="k">for</span> <span class="n">points_coords</span> <span class="ow">in</span> <span class="n">surface_c</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">neighbors_points</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="n">use_winding_order_normal</span><span class="p">:</span>
+        <span class="n">known_face_normal</span> <span class="o">=</span> <span class="n">compute_normal</span><span class="p">(</span><span class="n">surface_c</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">face_points</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">known_face_normal</span> <span class="o">=</span> <span class="n">surface_c</span><span class="o">.</span><span class="n">face_normals</span><span class="p">[</span><span class="n">known_face</span><span class="p">]</span>
+    <span class="n">neighbors_angles</span> <span class="o">=</span> <span class="p">[</span><span class="n">dihedral_angle</span><span class="p">(</span><span class="n">known_face_normal</span><span class="p">,</span> <span class="n">neighbor_normal</span><span class="p">,</span> <span class="n">plane_normal</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">neighbor_normal</span> <span class="ow">in</span> <span class="n">neighbors_normals</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">neighbors_angles</span>
+
+
+<span class="k">def</span> <span class="nf">choose_outer_surface_face</span><span class="p">(</span><span class="n">surface</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">known_face</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">shared_line</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> \
+        <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Choose which neighbor of a given face on a given shared line must lie on the true surface of the given surface mesh.</span>
+<span class="sd">    The neighbor on the true surface is that which has the lowest dihedral angle with the known surface face.</span>
+
+<span class="sd">    Only works on surfaces with all faces having the same number of points. (Since pyvista_faces_to_2d is used)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    surface</span>
+<span class="sd">        Pyvista PolyData representing a surface mesh</span>
+<span class="sd">    known_face</span>
+<span class="sd">        Index of the face in surface that is known to be on the &quot;true&quot; surface</span>
+<span class="sd">    neighbors</span>
+<span class="sd">        List of indices to faces that are neighbors to known_face along a single shared line</span>
+<span class="sd">    shared_line</span>
+<span class="sd">        Tuple of indices to points in surface that represents the shared line between known_face and its neighbors</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    surface face</span>
+<span class="sd">        The neighbor which lies on the true surface</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">neighbors_angles</span> <span class="o">=</span> <span class="n">compute_neighbor_angles</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="n">known_face</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">,</span> <span class="n">shared_line</span><span class="p">)</span>
+
+    <span class="nb">min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">neighbors_angles</span><span class="p">)</span>
+    <span class="n">surface_face</span> <span class="o">=</span> <span class="n">neighbors</span><span class="p">[</span><span class="nb">min</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">surface_face</span>
+
+
+<span class="k">def</span> <span class="nf">choose_inner_surface_face</span><span class="p">(</span><span class="n">surface</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">,</span> <span class="n">known_face</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">shared_line</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> \
+        <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+
+    <span class="n">agreements</span> <span class="o">=</span> <span class="n">compute_face_agreement_with_normals</span><span class="p">(</span><span class="n">surface</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">agreements</span><span class="p">[</span><span class="n">known_face</span><span class="p">]:</span>
+        <span class="n">rewind_face</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="n">known_face</span><span class="p">)</span>
+    <span class="n">neighbors_angles</span> <span class="o">=</span> <span class="n">compute_neighbor_angles</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="n">known_face</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">,</span> <span class="n">shared_line</span><span class="p">,</span> <span class="n">use_winding_order_normal</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nb">min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">neighbors_angles</span><span class="p">)</span>
+    <span class="n">surface_face</span> <span class="o">=</span> <span class="n">neighbors</span><span class="p">[</span><span class="nb">min</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">surface_face</span>
+
+
+<div class="viewcode-block" id="find_face_on_outer_surface"><a class="viewcode-back" href="../../modules.html#pyvista_tools.pyvista_tools.find_face_on_outer_surface">[docs]</a><span class="k">def</span> <span class="nf">find_face_on_outer_surface</span><span class="p">(</span><span class="n">surface</span><span class="p">:</span> <span class="n">pv</span><span class="o">.</span><span class="n">PolyData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find a face on the outer surface by casting a long ray from the first surface and choosing the last face it hits</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    surface</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    face</span>
+<span class="sd">        A face guaranteed to be on the outer surface of the input surface mesh</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#</span>
+    <span class="n">stop</span> <span class="o">=</span> <span class="n">surface</span><span class="o">.</span><span class="n">cell_centers</span><span class="p">()</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">surface</span><span class="o">.</span><span class="n">face_normals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">surface</span><span class="o">.</span><span class="n">bounds</span>
+    <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">([</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">4</span><span class="p">]])</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">stop</span> <span class="o">+</span> <span class="p">(</span><span class="n">surface</span><span class="o">.</span><span class="n">face_normals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">distance</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">intersection_cells</span> <span class="o">=</span> <span class="n">surface</span><span class="o">.</span><span class="n">ray_trace</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">first_point</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">face</span> <span class="o">=</span> <span class="n">intersection_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">face</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">PyVista Tools</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">PyVista Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Module Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Credits</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Andrew Creegan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

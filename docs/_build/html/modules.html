@@ -36,6 +36,377 @@
             
   <section id="module-reference">
 <h1>Module Reference<a class="headerlink" href="#module-reference" title="Permalink to this headline">¶</a></h1>
+<section id="pyvista-features">
+<h2>PyVista Features<a class="headerlink" href="#pyvista-features" title="Permalink to this headline">¶</a></h2>
+<p>pyvista_features is a module that provides high level features for working with pyvista objects. These features should
+transform or create pyvista objects. They are intended to be useful on their own as part of a workflow that makes use
+of pyvista objects.</p>
+<span class="target" id="module-pyvista_tools.pyvista_features"></span><dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_features.remove_shared_faces_with_merge">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_features.</span></span><span class="sig-name descname"><span class="pre">remove_shared_faces_with_merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meshes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_one</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_removed_faces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_features.html#remove_shared_faces_with_merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_features.remove_shared_faces_with_merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge a list of meshes and remove shared faces. Optionally keep one of each duplicate face (leaving shared wall
+intact). Optionally return list of removed faces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>meshes</strong> (<em>List</em><em>[</em><em>pv.PolyData</em><em>]</em>) – </p></li>
+<li><p><strong>keep_one</strong> – Keep one of each duplicate face instead of removing both</p></li>
+<li><p><strong>return_removed_faces</strong> – Return a list of faces that were removed</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>merged</em> – Merged mesh with shared faces removed</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pv.PolyData | Tuple[pv.PolyData, list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_features.rewind_faces_to_normals">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_features.</span></span><span class="sig-name descname"><span class="pre">rewind_faces_to_normals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_features.html#rewind_faces_to_normals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_features.rewind_faces_to_normals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-order the faces of a Pyvista Polydata to match the face normals</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>PolyData</em>) – Mesh to reorder the faces of</p></li>
+<li><p><strong>inplace</strong> – Update mesh inplace</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>mesh_c</em> – Updated mesh</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>Optional</em>[<em>PolyData</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_features.extract_outer_surface">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_features.</span></span><span class="sig-name descname"><span class="pre">extract_outer_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_removed_faces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_features.html#extract_outer_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_features.extract_outer_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>An algorithm to refine a surface mesh by keeping only faces on the outer surface of the mesh, thereby removing
+any inner walls that would be left by the Pyvista extract surface algorithm.</p>
+<p>This algorithm starts by identifying a known surface face, then recursively adds connected faces which lie on the
+surface. This is necessary instead of iterating through each face because the method for determining a surface face
+on a non-manifold line requires knowledge of another surface face.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>pv.PolyData</em>) – Surface to refine</p></li>
+<li><p><strong>return_removed_faces</strong> – return removed faces</p></li>
+<li><p><strong>inplace</strong> – Update mesh inplace</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>r_surface</em> – Refined surface</p></li>
+<li><p><em>removed_faces</em> – Faces that were removed</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Optional[pv.PolyData] | Tuple[Optional[pv.PolyData], list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_features.remove_boundary_faces_recursively">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_features.</span></span><span class="sig-name descname"><span class="pre">remove_boundary_faces_recursively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_features.html#remove_boundary_faces_recursively"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_features.remove_boundary_faces_recursively" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove boundary faces, then re-check for boundary faces and continue removing recursively until no boundary faces
+remain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>PolyData</em>) – </p></li>
+<li><p><strong>inplace</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>r_mesh</em> – Mesh with boundary faces removed</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>Optional</em>[<em>PolyData</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_features.extract_enclosed_regions">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_features.</span></span><span class="sig-name descname"><span class="pre">extract_enclosed_regions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_features.html#extract_enclosed_regions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_features.extract_enclosed_regions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract enclosed regions from a surface mesh.</p>
+<p>Todo: To avoid using large amounts of memory, potentially resulting in a stack overflow, this should me implemented
+using a while loop that records where it’s been in order to decide where to go next, instead of using recursion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mesh</strong> (<em>PolyData</em>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>regions</em></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>List</em>[<em>PolyData</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="pyvista-tools">
+<h2>PyVista Tools<a class="headerlink" href="#pyvista-tools" title="Permalink to this headline">¶</a></h2>
+<p>pyvista_tools is a module that provides tools for working with pyvista objects. This module should contain functions
+that are not necessarily useful on their own, but can be used to support development of pyvista features.</p>
+<span class="target" id="module-pyvista_tools.pyvista_tools"></span><dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_tools.pyvista_faces_to_2d">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_tools.</span></span><span class="sig-name descname"><span class="pre">pyvista_faces_to_2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_tools.html#pyvista_faces_to_2d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_tools.pyvista_faces_to_2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert pyvista faces from the native 1d array to a 2d array with one face per row. Padding is trimmed.</p>
+<p>Only works on a list of faces with all the same number of points per face.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>faces</strong> (<em>ArrayLike</em>) – Faces to be reshaped</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>2d array of faces</em></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>ndarray</em>[<em>Any</em>, <em>dtype</em>[<em>ScalarType</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_tools.pyvista_faces_to_1d">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_tools.</span></span><span class="sig-name descname"><span class="pre">pyvista_faces_to_1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_tools.html#pyvista_faces_to_1d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_tools.pyvista_faces_to_1d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert 2d array of faces to the pyvista native 1d format, inserting the padding.</p>
+<p>Only works on a list of faces with all the same number of points per face.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>faces</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>ScalarType</em><em>]</em><em>]</em>) – Faces to be reshaped</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>1d array of faces</em></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>ndarray</em>[<em>Any</em>, <em>dtype</em>[<em>ScalarType</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_tools.select_shared_faces">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_tools.</span></span><span class="sig-name descname"><span class="pre">select_shared_faces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_tools.html#select_shared_faces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_tools.select_shared_faces" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select that faces that two meshes share. Shared faces are determined by selecting the faces that use shared points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_a</strong> (<em>PolyData</em>) – First mesh</p></li>
+<li><p><strong>mesh_b</strong> (<em>PolyData</em>) – Second mesh</p></li>
+<li><p><strong>tolerance</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Tolerance for selecting shared points</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>Tuple of lists containing the indices of the shared faces in mesh_a and mesh_b</em></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>Tuple</em>[list, list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_tools.select_faces_using_points">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_tools.</span></span><span class="sig-name descname"><span class="pre">select_faces_using_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_tools.html#select_faces_using_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_tools.select_faces_using_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select all faces in a mesh that contain only the specified points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>PolyData</em>) – Mesh to select from</p></li>
+<li><p><strong>points</strong> (<em>list</em>) – The only points in the given mesh that the selected faces may contain</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>mesh_faces</em> – List of indices of the selected faces in the mesh</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>List</em>[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_tools.select_points_used_by_faces">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_tools.</span></span><span class="sig-name descname"><span class="pre">select_points_used_by_faces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclusive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_tools.html#select_points_used_by_faces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_tools.select_points_used_by_faces" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select points used in the faces of a mesh. Optionally specify a subset of points and/or faces to check. When
+exclusive is set to True, selects only points that are not used in the remaining faces.</p>
+<p>Only works on meshes with all the same number of points per face.</p>
+<p>Todo: not crash if you don’t specify points (till then you can use list(range(len(mesh.points)))</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>PolyData</em>) – Mesh to select from</p></li>
+<li><p><strong>points</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Optional subset of points in mesh to select from</p></li>
+<li><p><strong>faces</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Optional subset of faces in mesh to test</p></li>
+<li><p><strong>exclusive</strong> (<em>bool</em>) – If true, selects only points exclusively used in the specified faces</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>List of points used in the specified faces</em></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>List</em>[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_tools.select_faces_using_edges">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_tools.</span></span><span class="sig-name descname"><span class="pre">select_faces_using_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_tools.html#select_faces_using_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_tools.select_faces_using_edges" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract all the faces of a Pyvista Polydata object that use a given set of edges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>PolyData</em>) – Mesh to extract edges from</p></li>
+<li><p><strong>edges</strong> (<em>PolyData</em>) – Edges to use</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>faces_using_edges</em> – List of faces in mesh that use edges</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>List</em>[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_tools.select_intersecting_triangles">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_tools.</span></span><span class="sig-name descname"><span class="pre">select_intersecting_triangles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quiet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_tools.html#select_intersecting_triangles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_tools.select_intersecting_triangles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper around the pymeshfix function for selecting self intersecting triangles</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>PolyData</em>) – Mesh to select from</p></li>
+<li><p><strong>quiet</strong> – Enable or disable verbose output from pymehsfix
+<em>NOTE</em> pymeshfix seems to have this backward. Quiet=True makes it loud. Quiet=False makes it quiet</p></li>
+<li><p><strong>args</strong> – args for PyTMesh.select_intersecting_triangles</p></li>
+<li><p><strong>kwargs</strong> – kwargs for PyTMesh.select_intersecting_Triangles</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>intersecting</em> – NDArray of intersecting triangles</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>ndarray</em>[<em>Any</em>, <em>dtype</em>[int]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_tools.identify_neighbors">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_tools.</span></span><span class="sig-name descname"><span class="pre">identify_neighbors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surface</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_tools.html#identify_neighbors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_tools.identify_neighbors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify neighbors of each face in a surface. Returns a dict of faces with each face’s neighbors, grouped by the
+lines that the faces share. Also returns a dict of lines in the surface with each face that uses each line.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>surface</strong> (<em>PolyData</em>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>neighbors_dict, lines_dict</em></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>, <em>Dict</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.pyvista_tools.find_face_on_outer_surface">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.pyvista_tools.</span></span><span class="sig-name descname"><span class="pre">find_face_on_outer_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surface</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/pyvista_tools.html#find_face_on_outer_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.pyvista_tools.find_face_on_outer_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find a face on the outer surface by casting a long ray from the first surface and choosing the last face it hits</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>surface</strong> (<em>PolyData</em>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>face</em> – A face guaranteed to be on the outer surface of the input surface mesh</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="geometry-tools">
+<h2>Geometry Tools<a class="headerlink" href="#geometry-tools" title="Permalink to this headline">¶</a></h2>
+<p>geometry_tools is a module that provides functions for making geometric calculations in support of pyvista_tools. These
+functions should not rely on pyvista specific types or data structures.</p>
+<span class="target" id="module-pyvista_tools.geometry_tools"></span><dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.geometry_tools.find_sequence">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.geometry_tools.</span></span><span class="sig-name descname"><span class="pre">find_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/geometry_tools.html#find_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.geometry_tools.find_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the start index of a subsequence in an array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>array</strong> (<em>ArrayLike</em>) – Array in which to search for sequence</p></li>
+<li><p><strong>sequence</strong> (<em>ArrayLike</em>) – Sequence to search for</p></li>
+<li><p><strong>check_reverse</strong> – Also search for the reverse of the sequence. The forward sequence is still given precedence.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>Location</em> – Start index of sequnce in array. -1 represents not found.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.geometry_tools.compute_normal">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.geometry_tools.</span></span><span class="sig-name descname"><span class="pre">compute_normal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/geometry_tools.html#compute_normal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.geometry_tools.compute_normal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute a vector that is normal to a plane defined by a list of three points</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>points</strong> (<em>ArrayLike</em>) – Points defining a plane</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>normal</em> – Vector that is normal to the plane defined by the input points</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><em>ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvista_tools.geometry_tools.dihedral_angle">
+<span class="sig-prename descclassname"><span class="pre">pyvista_tools.geometry_tools.</span></span><span class="sig-name descname"><span class="pre">dihedral_angle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">normal_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normal_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plane_normal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degrees</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyvista_tools/geometry_tools.html#dihedral_angle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyvista_tools.geometry_tools.dihedral_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate dihedral angle between two faces specified by their normal vectors, with 0 &lt; angle &lt; pi. Optionally, an
+additional normal can be given, defining a plane on which normal_a and normal_b lie. With this information, the
+dihedral angle can be given as 0 &lt; angle &lt; 2*pi</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>normal_a</strong> (<em>ArrayLike</em>) – Normal vector A</p></li>
+<li><p><strong>normal_b</strong> (<em>ArrayLike</em>) – Normal vector B</p></li>
+<li><p><strong>plane_normal</strong> (<em>ArrayLike</em>) – Vector that is normal to the plane that normal_a and normal_b lie on (it is perpendicular to both). The direction
+of this vector will be used to determine if the dihedral angle is positive or negative, thus allowing the output
+to be between 0 and 2pi</p></li>
+<li><p><strong>degrees</strong> – Return the angle in degrees</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>angle</em> – Dihedral angle in radians (or optionally degrees)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -59,7 +430,12 @@
 <li class="toctree-l1"><a class="reference internal" href="index.html">PyVista Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Module Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Module Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pyvista-features">PyVista Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyvista-tools">PyVista Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#geometry-tools">Geometry Tools</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
 </ul>

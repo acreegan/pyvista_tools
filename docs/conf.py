@@ -52,10 +52,10 @@ html_static_path = ['_static']
 
 html_css_files = ['css/custom.css']
 
-html_theme_options = {
-    "sidebar_width": "250px",
-    "page_width": "95%"
-}
+# html_theme_options = {
+#     "sidebar_width": "250px",
+#     "page_width": "95%"
+# }
 
 autodoc_default_options = {
     'member-order': 'bysource'

@@ -557,11 +557,15 @@ def extract_enclosed_regions(mesh: pv.PolyData) -> List[pv.PolyData]:
     Extract enclosed regions from a surface mesh.
 
     Todo: To avoid using large amounts of memory, potentially resulting in a stack overflow, this should me implemented
-     using a while loop that records where it's been in order to decide where to go next, instead of using recursion.
+    using a while loop that records where it's been in order to decide where to go next, instead of using recursion.
 
     Parameters
     ----------
     mesh
+
+    Returns
+    -------
+    regions
     """
     mesh = mesh.copy()
     mesh = remove_boundary_faces_recursively(mesh)

@@ -1,0 +1,306 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyvista_tools.geometry_tools &#8212; PyVista Tools  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyvista_tools.geometry_tools</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">ArrayLike</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">geometry_tools is a module that provides functions for making geometric calculations in support of pyvista_tools. These</span>
+<span class="sd">functions should not rely on pyvista specific types or data structures.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="find_sequence"><a class="viewcode-back" href="../../modules.html#pyvista_tools.geometry_tools.find_sequence">[docs]</a><span class="k">def</span> <span class="nf">find_sequence</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">sequence</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find the start index of a subsequence in an array.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    array</span>
+<span class="sd">        Array in which to search for sequence</span>
+<span class="sd">    sequence</span>
+<span class="sd">        Sequence to search for</span>
+<span class="sd">    check_reverse</span>
+<span class="sd">        Also search for the reverse of the sequence. The forward sequence is still given precedence.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Location</span>
+<span class="sd">        Start index of sequnce in array. -1 represents not found.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">location</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="c1"># hstack array so we can find sequences that wrap around</span>
+    <span class="n">search_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">array</span><span class="p">,</span> <span class="n">array</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">search_array</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">search_array</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)]</span> <span class="o">==</span> <span class="n">sequence</span><span class="p">):</span>
+            <span class="n">location</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">location</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">check_reverse</span><span class="p">:</span>
+        <span class="n">location</span> <span class="o">=</span> <span class="n">find_sequence</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">sequence</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">check_reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">location</span></div>
+
+
+<span class="k">def</span> <span class="nf">winding_order_agrees_with_normal</span><span class="p">(</span><span class="n">points</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate whether the normal vector implied by a list of points agrees with the given normal vector</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    points</span>
+<span class="sd">    normal</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    agrees:</span>
+<span class="sd">        True if the dot product between expected normal and given normal is positive. False otherwise</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">expected_normal</span> <span class="o">=</span> <span class="n">compute_normal</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">dot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">expected_normal</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span>
+    <span class="n">agrees</span> <span class="o">=</span> <span class="n">dot</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="n">agrees</span>
+
+
+<div class="viewcode-block" id="compute_normal"><a class="viewcode-back" href="../../modules.html#pyvista_tools.geometry_tools.compute_normal">[docs]</a><span class="k">def</span> <span class="nf">compute_normal</span><span class="p">(</span><span class="n">points</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute a vector that is normal to a plane defined by a list of three points</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    points</span>
+<span class="sd">        Points defining a plane</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    normal</span>
+<span class="sd">        Vector that is normal to the plane defined by the input points</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Need at least three points to compute a normal&quot;</span><span class="p">)</span>
+
+    <span class="n">normal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">normal</span></div>
+
+
+<span class="k">def</span> <span class="nf">find_loops_and_chains</span><span class="p">(</span><span class="n">lines</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Classify connected &quot;loops&quot; and &quot;chains&quot; in a list of line segments represented by 2 Tuples. Chains are lists of</span>
+<span class="sd">    connected segments with two loose ends. Loops are lists of connected segments without loose ends.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lines: Nx2 ArrayLike</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">line_in_loops</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="n">edge</span><span class="p">)</span> <span class="ow">or</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="n">edge</span><span class="p">)</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">]</span>
+        <span class="c1"># If either end of the line is already in a loop, add the line to that loop</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">line_in_loops</span><span class="p">):</span>
+            <span class="n">edges</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">line_in_loops</span><span class="p">)]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+        <span class="c1"># Otherwise, start a new loop</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+            <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="c1"># Before sorting, classify into loops and chains</span>
+    <span class="c1"># Loops have all nodes exactly twice. Chains have one line with a unique node 0, and one line with a unique node 1</span>
+    <span class="c1"># To sort chains, we need to start with the line with the unique node 0</span>
+    <span class="n">loops</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">chains</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+        <span class="n">starts</span><span class="p">,</span> <span class="n">ends</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">edge</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">starts</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">ends</span><span class="p">):</span>
+            <span class="c1"># To guarantee consistent behavior, arbitarily set the start node of a loop to the minimum node index</span>
+            <span class="n">loops</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">starts</span><span class="p">),</span> <span class="s2">&quot;edge&quot;</span><span class="p">:</span> <span class="n">edge</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">starts</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">ends</span><span class="p">))[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;edge&quot;</span><span class="p">:</span> <span class="n">edge</span><span class="p">})</span>
+
+    <span class="c1"># Sort</span>
+    <span class="n">sorted_loops</span> <span class="o">=</span> <span class="p">[</span><span class="n">sort_edge</span><span class="p">(</span><span class="n">loop</span><span class="p">[</span><span class="s2">&quot;edge&quot;</span><span class="p">],</span> <span class="n">loop</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">loops</span><span class="p">]</span>
+    <span class="n">sorted_chains</span> <span class="o">=</span> <span class="p">[</span><span class="n">sort_edge</span><span class="p">(</span><span class="n">chain</span><span class="p">[</span><span class="s2">&quot;edge&quot;</span><span class="p">],</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">chain</span> <span class="ow">in</span> <span class="n">chains</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">sorted_loops</span><span class="p">,</span> <span class="n">sorted_chains</span>
+
+
+<span class="k">def</span> <span class="nf">sort_edge</span><span class="p">(</span><span class="n">edge</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">start_node</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLike</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sort an edge represented by a list of 2 Tuples such that connected nodes are sequential in the list.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    edge</span>
+<span class="sd">    start_node</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sorted_edge</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sorted_edge</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">edge</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">start_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">start_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">([</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">start_node</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">edge</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">start_index</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">sorted_edge</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">start_index</span><span class="p">))</span>  <span class="c1"># Start with first item</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">edge</span><span class="p">)):</span>
+        <span class="c1"># Next item in loop is index where the start of the line is the end of the current line</span>
+        <span class="n">next_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">([</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">sorted_edge</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">edge</span><span class="p">])</span>
+        <span class="n">sorted_edge</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">next_index</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">sorted_edge</span>
+
+
+<div class="viewcode-block" id="dihedral_angle"><a class="viewcode-back" href="../../modules.html#pyvista_tools.geometry_tools.dihedral_angle">[docs]</a><span class="k">def</span> <span class="nf">dihedral_angle</span><span class="p">(</span><span class="n">normal_a</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">normal_b</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">plane_normal</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">degrees</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate dihedral angle between two faces specified by their normal vectors, with 0 &lt; angle &lt; pi. Optionally, an</span>
+<span class="sd">    additional normal can be given, defining a plane on which normal_a and normal_b lie. With this information, the</span>
+<span class="sd">    dihedral angle can be given as 0 &lt; angle &lt; 2*pi</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    normal_a</span>
+<span class="sd">        Normal vector A</span>
+<span class="sd">    normal_b</span>
+<span class="sd">        Normal vector B</span>
+<span class="sd">    plane_normal</span>
+<span class="sd">        Vector that is normal to the plane that normal_a and normal_b lie on (it is perpendicular to both). The direction</span>
+<span class="sd">        of this vector will be used to determine if the dihedral angle is positive or negative, thus allowing the output</span>
+<span class="sd">        to be between 0 and 2pi</span>
+<span class="sd">    degrees</span>
+<span class="sd">        Return the angle in degrees</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    angle</span>
+<span class="sd">        Dihedral angle in radians (or optionally degrees)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">length_product</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">normal_a</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">normal_b</span><span class="p">)</span>
+    <span class="n">dot_product</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">normal_a</span><span class="p">,</span> <span class="n">normal_b</span><span class="p">)</span>
+    <span class="n">cosine</span> <span class="o">=</span> <span class="n">dot_product</span> <span class="o">/</span> <span class="n">length_product</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">cosine</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>  <span class="c1"># Avoid rounding errors resulting in nan</span>
+
+    <span class="k">if</span> <span class="n">plane_normal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cross_product</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">normal_a</span><span class="p">,</span> <span class="n">normal_b</span><span class="p">)</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">plane_normal</span><span class="p">,</span> <span class="n">cross_product</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">angle</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">-</span> <span class="n">angle</span>
+
+    <span class="k">if</span> <span class="n">degrees</span><span class="p">:</span>
+        <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">angle</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">PyVista Tools</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">PyVista Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Module Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Credits</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Andrew Creegan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
