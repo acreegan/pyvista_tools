@@ -225,8 +225,9 @@ def remove_shared_faces_with_merge(meshes: List[pv.PolyData], keep_one=False, re
         Merged mesh with shared faces removed
 
     """
-    for i, mesh in enumerate(meshes):
-        merged = meshes[i-1].merge(mesh)
+    merged = meshes[0]
+    for i, mesh in enumerate(meshes[1:]):
+        merged = merged.merge(mesh)
 
     faces = pyvista_faces_to_2d(merged.faces)
 
