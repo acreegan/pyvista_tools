@@ -427,7 +427,7 @@ def test_find_loops_and_chains():
 
 
 def test_triangulate_loop():
-    loop = [(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 1)]
+    loop = np.array([(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 1)], dtype=float)
     correct_faces = [[8, 1, 2], [3, 8, 2], [7, 8, 3], [4, 7, 3], [6, 7, 4], [5, 6, 4]]
 
     faces = triangulate_loop_with_stitch(loop)
@@ -436,7 +436,7 @@ def test_triangulate_loop():
 
 
 def test_triangulate_loop_with_nearest_neighbors_boundary_m():
-    points = np.array([[0, 0, 0], [1, 0, 0], [3, 0, 0], [0, 1, 0], [0.5, 1, 0], [1, 0.5, 0], [2, 1, 0], [3, 1, 0]])
+    points = np.array([[0, 0, 0], [1, 0, 0], [3, 0, 0], [0, 1, 0], [0.5, 1, 0], [1, 0.5, 0], [2, 1, 0], [3, 1, 0]], dtype=float)
     loop = np.array([[1, 2], [2, 7], [7, 6], [6, 5], [5, 4], [4, 3], [3, 0], [0, 1]])
     correct_faces = [[1, 5, 0], [0, 5, 3], [3, 5, 4], [5, 1, 6], [6, 1, 7], [7, 1, 2]]
 
@@ -453,7 +453,7 @@ def test_triangulate_loop_with_nearest_neighbors_boundary_m():
 
 
 def test_triangulate_loop_with_nearest_neighbors_boundary_square():
-    points = np.array([[0, 0, 0], [1, 0, 0], [2, 0, 0], [2, 1, 0], [2, 2, 0], [1, 2, 0], [0, 2, 0], [0, 1, 0]])
+    points = np.array([[0, 0, 0], [1, 0, 0], [2, 0, 0], [2, 1, 0], [2, 2, 0], [1, 2, 0], [0, 2, 0], [0, 1, 0]], dtype=float)
     loop = np.array([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 0]])
     correct_faces = [[0, 1, 7], [7, 1, 6], [6, 1, 5], [5, 1, 4], [4, 1, 3], [3, 1, 2]]
 
@@ -470,7 +470,7 @@ def test_triangulate_loop_with_nearest_neighbors_boundary_square():
 
 
 def test_triangulate_loop_with_nearest_neighbors_boundary_3d():
-    points = np.array([[0, 0, 0], [1, 1, 1], [2, 0, 0], [2, 1, 0], [2, 2, 0], [1, 2, 0], [0, 2, 0], [0, 1, 0]])
+    points = np.array([[0, 0, 0], [1, 1, 1], [2, 0, 0], [2, 1, 0], [2, 2, 0], [1, 2, 0], [0, 2, 0], [0, 1, 0]], dtype=float)
     loop = np.array([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 0]])
 
     faces = triangulate_loop_with_nearest_neighbors(loop, points)
@@ -484,11 +484,11 @@ def test_triangulate_loop_with_nearest_neighbors_boundary_3d():
     # p.add_mesh(boundary, color="red")
     # p.show()
 
-    assert np.empty(intersecting_triangles)
+    assert len(intersecting_triangles) == 0
 
 
 def test_dihedral_angle():
-    points = np.array([[0, 0, 0], [0, 0, 1], [0, 0.5, 0.5], [0.5, 0, 0.5], [0, -0.5, 0.5], [-0.5, 0, 0.5]])
+    points = np.array([[0, 0, 0], [0, 0, 1], [0, 0.5, 0.5], [0.5, 0, 0.5], [0, -0.5, 0.5], [-0.5, 0, 0.5]], dtype=float)
     faces = np.array([[0, 1, 2], [0, 1, 5], [0, 1, 4], [0, 1, 3]])
     normals = [compute_normal(points[face]) for face in faces]
     plane_normal = points[1] - points[0]
