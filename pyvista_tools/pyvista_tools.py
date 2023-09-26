@@ -272,10 +272,12 @@ def compute_face_agreement_with_normals(mesh: pv.PolyData) -> List[bool]:
     faces = pyvista_faces_to_2d(mesh.faces)
     face_coords = mesh.points[faces]
 
-    agreements = []
-    for coords, normal in zip(face_coords, mesh.face_normals):
-        agreement = winding_order_agrees_with_normal(coords, normal)
-        agreements.append(agreement)
+    agreements = winding_order_agrees_with_normal(face_coords, mesh.face_normals)
+
+    # agreements = []
+    # for coords, normal in zip(face_coords, mesh.face_normals):
+    #     agreement = winding_order_agrees_with_normal(coords, normal)
+    #     agreements.append(agreement)
 
     return agreements
 
@@ -300,7 +302,12 @@ def rewind_face(mesh, face_num):
     faces = pyvista_faces_to_2d(mesh.faces)
     face = faces[face_num]
     face = [face[0], *face[-1:0:-1]]  # Start at same point, then reverse the rest of the face nodes
-    faces[face_num] = face
+    if not (faces.flags["WRITEABLE"]):
+        faces.setflags(write=1)
+        faces[face_num] = face
+        faces.setflags(write=0)
+    else:
+        faces[face_num] = face
     mesh.faces = pyvista_faces_to_1d(faces)
 
 

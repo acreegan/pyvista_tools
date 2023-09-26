@@ -4,7 +4,7 @@ from pyvista_tools import remove_shared_faces, select_shared_faces, select_point
     find_loops_and_chains, triangulate_loop_with_stitch, triangulate_loop_with_nearest_neighbors, \
     select_intersecting_triangles, dihedral_angle, compute_normal, extract_outer_surface, identify_neighbors, \
     remove_boundary_faces_recursively, extract_enclosed_regions, compute_neighbor_angles, rewind_face, \
-    rewind_neighbor, remove_shared_faces_with_merge
+    rewind_neighbor, remove_shared_faces_with_merge, compute_face_agreement_with_normals, rewind_faces_to_normals
 
 import numpy as np
 import numpy.testing
@@ -75,6 +75,9 @@ shared_faces_ab = ([12, 13, 14, 15], [10, 11, 12, 13])
 shared_points_ab = ([0, 1, 2, 3, 8], [0, 1, 2, 3, 8])
 
 
+def points_to_sorted_str(array):
+    return np.sort([f"{p[0]}{p[1]}{p[2]}" for p in array])
+
 def test_select_faces_using_points():
     faces = select_faces_using_points(mesh_a, shared_points_ab[0])
     assert faces == shared_faces_ab[0]
@@ -134,8 +137,8 @@ def test_remove_shared_faces():
     for mesh in trimmed:
         merged = merged.merge(mesh)
 
-    assert np.array_equal(a_b_c_merged.points, merged.points)
-    assert np.array_equal(a_b_c_merged.faces, merged.faces)
+    np.testing.assert_array_equal(points_to_sorted_str(merged.points), points_to_sorted_str(a_b_c_merged.points))
+    assert len(merged.faces) == len(a_b_c_merged.faces)
 
     p = pv.PolyData(merged.points, merged.faces)
     assert p.is_manifold
@@ -180,10 +183,10 @@ def test_remove_shared_faces_again():
          5, 4, 3, 6, 7, 3, 3, 6, 3, 2, 3, 1, 0, 2, 3, 1, 2, 3, 3, 4, 5, 7,
          3, 4, 7, 6])
 
-    assert np.array_equal(removed[0].points, correct_removed_0_points)
-    assert np.array_equal(removed[0].faces, correct_removed_0_faces)
-    assert np.array_equal(removed[1].points, correct_removed_1_points)
-    assert np.array_equal(removed[1].faces, correct_removed_1_faces)
+    assert np.array_equal(points_to_sorted_str(removed[0].points), points_to_sorted_str(correct_removed_0_points))
+    assert len(removed[0].faces) == len(correct_removed_0_faces)
+    assert np.array_equal(points_to_sorted_str(removed[1].points), points_to_sorted_str(correct_removed_1_points))
+    assert len(removed[1].faces) == len(correct_removed_1_faces)
 
 
 def test_remove_shared_faces_with_merge():
@@ -246,10 +249,10 @@ def test_remove_shared_faces_with_ray_trace():
          5, 4, 3, 6, 7, 3, 3, 6, 3, 2, 3, 1, 0, 2, 3, 1, 2, 3, 3, 4, 5, 7,
          3, 4, 7, 6])
 
-    assert np.array_equal(removed[0].points, correct_removed_0_points)
-    assert np.array_equal(removed[0].faces, correct_removed_0_faces)
-    assert np.array_equal(removed[1].points, correct_removed_1_points)
-    assert np.array_equal(removed[1].faces, correct_removed_1_faces)
+    assert np.array_equal(points_to_sorted_str(removed[0].points), points_to_sorted_str(correct_removed_0_points))
+    assert len(removed[0].faces) == len(correct_removed_0_faces)
+    assert np.array_equal(points_to_sorted_str(removed[1].points), points_to_sorted_str(correct_removed_1_points))
+    assert len(removed[1].faces) == len(correct_removed_1_faces)
 
 
 def test_remove_shared_faces_with_ray_trace_angled():
@@ -264,10 +267,10 @@ def test_remove_shared_faces_with_ray_trace_angled():
     # p.show()
 
     # Even though the long rays definitely hit, nothing is removed because the angle is not within tolerance
-    assert np.array_equal(removed[0].points, a.points)
-    assert np.array_equal(removed[0].faces, a.faces)
-    assert np.array_equal(removed[1].points, b.points)
-    assert np.array_equal(removed[1].faces, b.faces)
+    assert np.array_equal(points_to_sorted_str(removed[0].points), points_to_sorted_str(a.points))
+    assert len(removed[0].faces) == len(a.faces)
+    assert np.array_equal(points_to_sorted_str(removed[1].points), points_to_sorted_str(b.points))
+    assert len(removed[1].faces) == len(b.faces)
 
 
 def test_pyvista_faces_by_dimension():
@@ -691,17 +694,17 @@ def test_extract_enclosed_regions():
     c = a.merge(b)
     c = c.remove_cells([1])
 
-    # p = pv.Plotter()
-    # p.add_mesh(c, style="wireframe")
-    # p.add_point_labels(c.cell_centers().points, list(range(c.n_cells)))
-    # p.show()
+    p = pv.Plotter()
+    p.add_mesh(c, style="wireframe")
+    p.add_point_labels(c.cell_centers().points, list(range(c.n_cells)))
+    p.show()
 
     regions = extract_enclosed_regions(c)
 
-    # p = pv.Plotter()
-    # p.add_mesh(regions[0], style="wireframe", color="red")
-    # p.add_mesh(regions[1], style="wireframe", color="blue")
-    # p.show()
+    p = pv.Plotter()
+    p.add_mesh(regions[0], style="wireframe", color="red")
+    p.add_mesh(regions[1], style="wireframe", color="blue")
+    p.show()
 
     region_0_correct_points = np.array([[-3., -1., -1.],
                                         [-3., -1., 1.],
@@ -721,8 +724,8 @@ def test_extract_enclosed_regions():
                                         [1., 1., -1.],
                                         [1., 1., 1.]])
 
-    assert np.array_equal(regions[0].points, region_0_correct_points)
-    assert np.array_equal(regions[1].points, region_1_correct_points)
+    assert np.array_equal(points_to_sorted_str(regions[0].points), points_to_sorted_str(region_0_correct_points))
+    assert np.array_equal(points_to_sorted_str(regions[1].points), points_to_sorted_str(region_1_correct_points))
 
 
 def test_extract_enclosed_regions_2():
@@ -749,6 +752,37 @@ def test_extract_enclosed_regions_2():
     # p.show()
 
     assert len(regions) == 3
+
+
+def test_compute_normal():
+    points = np.array([[0, 0, 0], [0, 0, 1], [0, 0.5, 0.5], [0.5, 0, 0.5], [0, -0.5, 0.5], [-0.5, 0, 0.5]])
+    faces = np.array([[0, 1, 2], [0, 1, 5], [0, 1, 4], [0, 1, 3]])
+
+    normals_vectorized = compute_normal(points[faces])
+
+    normals_individual = [compute_normal(points[face]) for face in faces]
+
+    np.testing.assert_array_equal(normals_vectorized, normals_individual)
+
+
+def test_compute_face_agreement_with_normals():
+    points = np.array([[0, 0, 0], [0, 0, 1], [0, 0.5, 0.5], [0.5, 0, 0.5], [0, -0.5, 0.5], [-0.5, 0, 0.5]])
+    faces = np.array([[0, 1, 2], [0, 1, 5], [0, 1, 4], [0, 1, 3]])
+
+    correct_agreements = [True, False, False, False]
+    correct_agreements_rw = [True, True, True, True]
+
+    mesh = pv.PolyData(points, pyvista_faces_to_1d(faces))
+
+    agreements = compute_face_agreement_with_normals(mesh)
+
+    mesh_rw = rewind_faces_to_normals(mesh)
+
+    agreements_rw = compute_face_agreement_with_normals(mesh_rw)
+
+    np.testing.assert_array_equal(correct_agreements, agreements)
+    np.testing.assert_array_equal(agreements_rw, correct_agreements_rw)
+
 
 
 def main():

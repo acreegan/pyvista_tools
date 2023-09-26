@@ -58,7 +58,11 @@ def winding_order_agrees_with_normal(points: ArrayLike, normal) -> bool:
 
     """
     expected_normal = compute_normal(points)
-    dot = np.dot(expected_normal, normal)
+
+    if len(expected_normal.shape) == 1:
+        dot = np.dot(expected_normal, normal)
+    else:
+        dot = np.sum(expected_normal * normal, axis=1)
     agrees = dot > 0
 
     return agrees
@@ -79,10 +83,13 @@ def compute_normal(points: ArrayLike) -> np.ndarray:
         Vector that is normal to the plane defined by the input points
 
     """
-    if len(points) < 3:
-        raise ValueError("Need at least three points to compute a normal")
+    if points.shape[-1] != 3:
+        raise ValueError("Final dimension of points must be 3")
 
-    normal = np.cross(points[1] - points[0], points[2] - points[1])
+    if len(points.shape) == 2:
+        normal = np.cross(points[1] - points[0], points[2] - points[1])
+    else:
+        normal = np.cross(points[:, 1] - points[:, 0], points[:, 2] - points[:, 1])
     return normal
 
 
