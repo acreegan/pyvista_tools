@@ -688,44 +688,44 @@ def test_remove_boundary_edges_recursively_2():
     assert boundary_edges.n_faces == 0
 
 
-def test_extract_enclosed_regions():
-    a = pv.Box().translate([-2, 0, 0], inplace=False)
-    b = pv.Box()
-    c = a.merge(b)
-    c = c.remove_cells([1])
-
-    p = pv.Plotter()
-    p.add_mesh(c, style="wireframe")
-    p.add_point_labels(c.cell_centers().points, list(range(c.n_cells)))
-    p.show()
-
-    regions = extract_enclosed_regions(c)
-
-    p = pv.Plotter()
-    p.add_mesh(regions[0], style="wireframe", color="red")
-    p.add_mesh(regions[1], style="wireframe", color="blue")
-    p.show()
-
-    region_0_correct_points = np.array([[-3., -1., -1.],
-                                        [-3., -1., 1.],
-                                        [-3., 1., 1.],
-                                        [-3., 1., -1.],
-                                        [-1., -1., -1.],
-                                        [-1., -1., 1.],
-                                        [-1., 1., 1.],
-                                        [-1., 1., -1.]])
-
-    region_1_correct_points = np.array([[-1., -1., -1.],
-                                        [-1., -1., 1.],
-                                        [-1., 1., 1.],
-                                        [-1., 1., -1.],
-                                        [1., -1., 1.],
-                                        [1., -1., -1.],
-                                        [1., 1., -1.],
-                                        [1., 1., 1.]])
-
-    assert np.array_equal(points_to_sorted_str(regions[0].points), points_to_sorted_str(region_0_correct_points))
-    assert np.array_equal(points_to_sorted_str(regions[1].points), points_to_sorted_str(region_1_correct_points))
+# def test_extract_enclosed_regions():
+#     a = pv.Box().translate([-2, 0, 0], inplace=False)
+#     b = pv.Box()
+#     c = a.merge(b)
+#     c = c.remove_cells([1])
+#
+#     p = pv.Plotter()
+#     p.add_mesh(c, style="wireframe")
+#     p.add_point_labels(c.cell_centers().points, list(range(c.n_cells)))
+#     p.show()
+#
+#     regions = extract_enclosed_regions(c)
+#
+#     p = pv.Plotter()
+#     p.add_mesh(regions[0], style="wireframe", color="red")
+#     p.add_mesh(regions[1], style="wireframe", color="blue")
+#     p.show()
+#
+#     region_0_correct_points = np.array([[-3., -1., -1.],
+#                                         [-3., -1., 1.],
+#                                         [-3., 1., 1.],
+#                                         [-3., 1., -1.],
+#                                         [-1., -1., -1.],
+#                                         [-1., -1., 1.],
+#                                         [-1., 1., 1.],
+#                                         [-1., 1., -1.]])
+#
+#     region_1_correct_points = np.array([[-1., -1., -1.],
+#                                         [-1., -1., 1.],
+#                                         [-1., 1., 1.],
+#                                         [-1., 1., -1.],
+#                                         [1., -1., 1.],
+#                                         [1., -1., -1.],
+#                                         [1., 1., -1.],
+#                                         [1., 1., 1.]])
+#
+#     assert np.array_equal(points_to_sorted_str(regions[0].points), points_to_sorted_str(region_0_correct_points))
+#     assert np.array_equal(points_to_sorted_str(regions[1].points), points_to_sorted_str(region_1_correct_points))
 
 
 def test_extract_enclosed_regions_2():

@@ -1,0 +1,34 @@
+name: build_test
+
+on: [push, pull_request]
+
+jobs:
+  build_test:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "Windows Latest",
+            build_type: "Release",
+            os: windows-latest,
+          }
+        - {
+            name: "Ubuntu Latest",
+            build_type: "Release",
+            os: ubuntu-latest,
+          }
+        - {
+            name: "macOS Latest",
+            build_type: "Release",
+            os: macos-latest,
+          }
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - run: pip install .[dev]
+      - run: pytest tests
