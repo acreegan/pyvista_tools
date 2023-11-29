@@ -4,6 +4,6 @@ requires = ["setuptools",
 build-backend = "setuptools.build_meta"
 
 [project]
-dynamic = ["version"]
+dynamic = ["version", "dependencies", "optional-dependencies"]
 name = "pyvista_tools"
 [tool.setuptools_scm]
